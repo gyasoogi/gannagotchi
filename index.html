@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>강아고치</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Galmuri11&display=swap');
+        
+        :root {
+            --color-bg: #FDF6E3; 
+            --color-device-shell: #FFD1DC; 
+            --color-device-bezel: #FF9EAF; 
+            --color-lcd-bg: #E0F2F1; 
+            --color-pixel-text: #334155; 
+            
+            --color-btn-pink: #FFB6C1;
+            --color-btn-pink-shadow: #DB8A98;
+            --color-btn-blue: #B3E5FC;
+            --color-btn-blue-shadow: #81D4FA;
+            --color-btn-yellow: #FFF9C4;
+            --color-btn-yellow-shadow: #FBC02D;
+            --color-btn-green: #C8E6C9;
+            --color-btn-green-shadow: #A5D6A7;
+            --color-btn-purple: #E1BEE7;
+            --color-btn-purple-shadow: #CE93D8;
+        }
+
+        body {
+            font-family: 'Galmuri11', 'Courier New', Courier, monospace;
+            background-color: var(--color-bg);
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            color: var(--color-pixel-text);
+            height: 100svh;
+            width: 100vw;
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        img {
+            -webkit-user-drag: none;
+            -khtml-user-drag: none;
+            -moz-user-drag: none;
+            -o-user-drag: none;
+            user-drag: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .view-base {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .flex-center-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .panel-box {
+            background-color: rgba(255, 255, 255, 0.8);
+            border-top: 4px solid var(--color-pixel-text);
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-overlay {
+            position: absolute;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.25rem;
+        }
+
+        .modal-box {
+            background-color: #ffffff;
+            border: 4px solid var(--color-pixel-text);
+            border-radius: 1.5rem;
+            padding: 1.25rem;
+            width: 100%;
+            max-width: 95%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-row {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .stat-label {
+            font-weight: bold;
+            color: #475569;
+        }
+
+        /* 3:4 비율 다마고치 기기 컨테이너 (가로 420px : 세로 560px) */
+        .tamagotchi-device {
+            background: linear-gradient(135deg, #FFE4E9 0%, var(--color-device-shell) 100%);
+            border: 12px solid var(--color-device-bezel);
+            border-radius: 95px 95px 110px 110px; 
+            box-shadow: 
+                inset 10px 10px 20px rgba(255, 255, 255, 0.7), 
+                inset -10px -10px 20px rgba(219, 138, 152, 0.4),
+                15px 15px 35px rgba(0,0,0,0.15);
+            position: relative;
+            width: 420px;
+            height: 560px;
+            padding: 28px 18px 48px 18px; 
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            transform-origin: center center;
+            transition: transform 0.1s ease-out;
+        }
+
+        .keychain {
+            position: absolute;
+            top: -45px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 48px;
+            height: 48px;
+            border: 8px solid #D1D5DB;
+            border-radius: 50%;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.15), inset 2px 2px 5px rgba(255,255,255,0.8);
+            z-index: -1;
+        }
+
+        .device-header {
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+        }
+        .header-dot {
+            width: 7px;
+            height: 7px;
+            background-color: var(--color-device-bezel);
+            border-radius: 50%;
+            box-shadow: inset 1px 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .hardware-buttons {
+            position: absolute;
+            bottom: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+        }
+        .hw-btn {
+            width: 26px;
+            height: 26px;
+            background-color: var(--color-btn-blue);
+            border-radius: 50%;
+            border: 3px solid var(--color-btn-blue-shadow);
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.15), inset 2px 2px 5px rgba(255,255,255,0.9);
+        }
+
+        .lcd-screen {
+            background-color: var(--color-lcd-bg);
+            border: 7px solid #9CA3AF;
+            border-radius: 40px;
+            overflow: hidden;
+            position: relative;
+            flex: 1;
+            box-shadow: inset 5px 5px 10px rgba(0,0,0,0.15);
+            background-image: linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+            background-size: 4px 4px;
+        }
+
+        .btn-round-bubble {
+            color: var(--color-pixel-text);
+            border: 3px solid var(--color-pixel-text);
+            border-radius: 50px; 
+            font-weight: bold;
+            transition: all 0.1s ease;
+            position: relative;
+            top: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
+        }
+
+        .btn-round-bubble:active {
+            top: 4px;
+            box-shadow: 0 0px 0 0 var(--color-pixel-text) !important;
+        }
+
+        .btn-pink { background-color: var(--color-btn-pink); box-shadow: 0 5px 0 0 var(--color-btn-pink-shadow); }
+        .btn-blue { background-color: var(--color-btn-blue); box-shadow: 0 5px 0 0 var(--color-btn-blue-shadow); }
+        .btn-yellow { background-color: var(--color-btn-yellow); box-shadow: 0 5px 0 0 var(--color-btn-yellow-shadow); }
+        .btn-green { background-color: var(--color-btn-green); box-shadow: 0 5px 0 0 var(--color-btn-green-shadow); }
+        .btn-purple { background-color: var(--color-btn-purple); box-shadow: 0 5px 0 0 var(--color-btn-purple-shadow); }
+
+        .stat-bar-container {
+            background-color: rgba(255,255,255,0.6);
+            border: 2px solid var(--color-pixel-text);
+            border-radius: 10px;
+            height: 14px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .stat-bar {
+            height: 100%;
+            transition: width 0.3s ease-in-out;
+            border-radius: 6px;
+            background-image: linear-gradient(90deg, rgba(255,255,255,0.3) 50%, transparent 50%);
+            background-size: 8px 100%;
+        }
+
+        .text-pixel-sm { font-size: 11px; }
+        .text-pixel-md { font-size: 13px; }
+        .text-pixel-lg { font-size: 15px; }
+
+        .fade-in { animation: fadeIn 0.4s ease-in forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .animate-bounce-slow { animation: bounceSlow 2.5s infinite; }
+        @keyframes bounceSlow { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-8px) scale(1.05); } }
+
+        .speech-bubble {
+            position: relative;
+            background: #ffffff;
+            border: 3px solid var(--color-pixel-text);
+            border-radius: 15px;
+            box-shadow: 3px 3px 0 0 rgba(0,0,0,0.1);
+        }
+        .speech-bubble:after {
+            content: ''; position: absolute; bottom: 0; left: 50%; width: 0; height: 0;
+            border: 10px solid transparent; border-top-color: #ffffff; border-bottom: 0;
+            margin-left: -10px; margin-bottom: -9px;
+        }
+        .speech-bubble:before {
+            content: ''; position: absolute; bottom: 0; left: 50%; width: 0; height: 0;
+            border: 13px solid transparent; border-top-color: var(--color-pixel-text); border-bottom: 0;
+            margin-left: -13px; margin-bottom: -13px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 다마고치 기기 외각 -->
+    <div class="tamagotchi-device" id="tamagotchi-device">
+        <div class="keychain"></div>
+
+        <div class="device-header">
+            <div class="header-dot"></div>
+            <div class="header-dot"></div>
+            <div class="header-dot"></div>
+            <div class="header-dot"></div>
+        </div>
+
+        <!-- 내부 LCD 화면 영역 -->
+        <div class="lcd-screen flex flex-col">
+            
+            <!-- LCD 내부 화면 전용 트랜지션 -->
+            <div id="view-ending-anim" class="hidden absolute inset-0 z-50 bg-white flex flex-col items-center justify-center transition-opacity duration-[2500ms] opacity-0 pointer-events-auto">
+                <p id="anim-text" class="text-base text-slate-800 font-bold break-keep text-center leading-relaxed px-4">시간이 흘러...<br>강아지는 훌쩍 자랐습니다.</p>
+            </div>
+
+            <!-- Title View (메인 화면 강아지 이미지 사이즈 확대) -->
+            <div id="view-title" class="absolute inset-0 z-20 flex flex-col items-center justify-center p-4 text-center">
+                <img src="pic/dog/0.png" alt="강아지" class="w-32 h-32 sm:w-36 sm:h-36 object-contain my-3 animate-bounce-slow" draggable="false">
+                <p class="text-sm font-bold mb-6" style="color: #698B8B;">훌륭한 강아지로<br>키워주세요!</p>
+                <div class="flex flex-col gap-3.5 w-full px-6">
+                    <button onclick="startGame()" class="btn-round-bubble btn-pink py-3 text-lg">게임 시작</button>
+                    <button onclick="showCollection()" class="btn-round-bubble btn-blue py-2.5 text-base">도감 보기</button>
+                </div>
+            </div>
+
+            <!-- Intro View -->
+            <div id="view-intro" onclick="handleIntroClick(event)" class="hidden view-base z-[25] cursor-pointer bg-cover bg-center" style="background-image: url('pic/dog/background.png');">
+                <div class="flex-center-col p-3 pointer-events-none">
+                    <div id="intro-speech-container" class="speech-bubble p-3 mb-3 max-w-[85%] text-center text-pixel-md font-bold text-slate-700 opacity-0 transition-opacity duration-200">
+                        <span id="intro-speech-text">...</span>
+                    </div>
+                    <div id="intro-character-container" class="mt-4 transition-transform duration-200 flex items-center justify-center">
+                        <img id="char-img-tag" src="pic/dog/background-dog.png" alt="캐릭터" style="width: 170px; height: 150px; image-rendering: pixelated;" class="object-contain" draggable="false">
+                    </div>
+                </div>
+                <div class="panel-box h-36 p-3 justify-between">
+                    <div id="intro-desc-text" class="text-slate-800 font-bold text-pixel-md leading-relaxed px-2 py-1 min-h-[36px] break-keep">
+                        상황 텍스트가 여기에 표시됩니다.
+                    </div>
+                    <div id="intro-action-area" class="text-center text-pixel-sm text-slate-500 font-bold py-1.5 bg-slate-100 rounded-full">
+                        [ 화면을 클릭하여 계속 ]
+                    </div>
+                </div>
+            </div>
+
+            <!-- Collection View -->
+            <div id="view-collection" class="hidden view-base z-30 bg-[#F0FFF0]">
+                <div id="collection-header" class="flex items-center justify-between px-3 py-2.5 border-b-2 border-slate-700 bg-white/50 gap-2">
+                    <h2 class="text-base font-bold text-slate-800 whitespace-nowrap">엔딩 도감</h2>
+                    <div class="flex items-center gap-1.5">
+                        <button id="btn-toggle-all-hints" onclick="toggleAllHints()" class="hidden text-[11px] text-slate-600 font-bold underline px-1 whitespace-nowrap">힌트 켜기</button>
+                        <button id="btn-photo-mode" onclick="togglePhotoMode()" class="btn-round-bubble btn-purple px-2 py-1 text-[11px] whitespace-nowrap">촬영 모드</button>
+                        <button onclick="hideCollection()" class="btn-round-bubble btn-yellow px-2 py-1 text-[11px] whitespace-nowrap">닫기</button>
+                    </div>
+                </div>
+                <div id="collection-list" class="flex-1 overflow-y-auto grid grid-cols-2 gap-2.5 p-2.5 pb-5">
+                </div>
+            </div>
+
+            <!-- Game View -->
+            <div id="view-game" class="hidden flex-1 flex-col h-full">
+                <!-- 상단 progress bar -->
+                <div class="mx-3 mt-2 px-1 py-0.5 flex items-center gap-2">
+                    <span id="txt-turn" class="text-[9px] bg-slate-700 text-white px-2 py-0.5 rounded-full whitespace-nowrap font-bold tracking-tight">Turn 1/24</span>
+                    <div class="flex-1 bg-slate-200 h-1.5 rounded-full border border-slate-600 overflow-hidden shadow-inner">
+                        <div id="bar-progress" class="bg-[#81D4FA] h-full w-0 transition-all duration-300 rounded-full"></div>
+                    </div>
+                </div>
+
+                <div class="p-2.5 mx-2 grid grid-cols-2 gap-x-2 gap-y-1.5 bg-white/50 border-2 border-slate-700 rounded-2xl text-pixel-sm">
+                    <div class="stat-row">
+                        <span class="stat-label">체력</span>
+                        <div class="flex-1 stat-bar-container">
+                            <div id="bar-hp" class="bg-green-400 stat-bar" style="width: 50%"></div>
+                        </div>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">지능</span>
+                        <div class="flex-1 stat-bar-container">
+                            <div id="bar-int" class="bg-blue-400 stat-bar" style="width: 50%"></div>
+                        </div>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">행복</span>
+                        <div class="flex-1 stat-bar-container">
+                            <div id="bar-hap" class="bg-yellow-400 stat-bar" style="width: 50%"></div>
+                        </div>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">멘탈</span>
+                        <div class="flex-1 stat-bar-container">
+                            <div id="bar-str" class="bg-purple-400 stat-bar" style="width: 50%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 인게임 캐릭터/말풍선 영역 (강아지 이미지에 mt-4 적용) -->
+                <div class="flex-center-col p-1">
+                    <div id="speech-container" class="speech-bubble p-2 mb-1 max-w-[85%] text-center text-pixel-sm font-bold text-slate-700 opacity-0 transition-opacity duration-200">
+                        <span id="speech-text">...</span>
+                    </div>
+                    <div id="character-img" class="mt-4 flex items-center justify-center transition-transform duration-200 animate-bounce-slow">
+                        <img src="pic/dog/1.png" alt="강아지" class="w-24 h-24 sm:w-28 sm:h-28 object-contain" draggable="false">
+                    </div>
+                </div>
+
+                <div class="panel-box p-2.5 h-[34%] min-h-[125px]">
+                    <div id="action-panel" class="grid grid-cols-2 gap-2 h-full">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Event Modal -->
+            <div id="modal-event" class="hidden modal-overlay z-40">
+                <div class="modal-box fade-in">
+                    <h3 id="event-title" class="text-base font-bold text-slate-900 mb-4 text-center break-keep leading-tight">이벤트 제목</h3>
+                    <div id="event-choices" class="flex flex-col gap-3"></div>
+                </div>
+            </div>
+
+            <!-- Ending Selecting Modal -->
+            <div id="modal-ending-select" class="hidden modal-overlay z-50">
+                <div class="modal-box fade-in max-h-[85%] overflow-y-auto">
+                    <div class="text-4xl text-center mb-2">✨</div>
+                    <h3 class="text-base font-bold text-slate-900 mb-1 text-center break-keep">저는 커서 뭐가 될까요?</h3>
+                    <p class="text-pixel-sm text-slate-500 mb-4 text-center bg-slate-100 py-1 rounded-full">원하는 직업을 선택해주세요.</p>
+                    <div id="ending-options" class="flex flex-col gap-3"></div>
+                </div>
+            </div>
+
+            <!-- Fullscreen Ending Result View (엔딩 창 강아지 이미지 축소) -->
+            <div id="view-result" class="hidden view-base z-[70] bg-[#FFF8DC] fade-in">
+                <div class="flex-center-col p-4">
+                    <img id="result-img" class="w-36 h-36 sm:w-40 sm:h-40 object-contain mt-6 mb-2 hidden animate-bounce-slow" draggable="false" alt="엔딩 이미지">
+                    <h2 id="result-title" class="text-slate-900 font-bold tracking-tighter bg-white px-4 py-1.5 rounded-full border-2 border-slate-400 mt-6">엔딩 제목</h2>
+                </div>
+                <div class="panel-box p-4 justify-between" style="min-height: 150px;">
+                    <p id="result-desc" class="text-xs sm:text-sm text-slate-800 font-bold leading-relaxed break-keep mb-3 text-center">설명 텍스트</p>
+                    <button onclick="returnToTitle()" class="btn-round-bubble btn-pink py-2.5 text-base w-full">타이틀로 돌아가기</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="hardware-buttons">
+            <div class="hw-btn"></div>
+            <div class="hw-btn"></div>
+            <div class="hw-btn"></div>
+        </div>
+    </div>
+
+    <script>
+        // Scale-to-Fit 로직
+        function fitToScreen() {
+            const device = document.getElementById('tamagotchi-device');
+            if (!device) return;
+
+            const baseWidth = 420;
+            const baseHeight = 605;
+            const marginRatio = 0.75; 
+
+            const scaleX = (window.innerWidth * marginRatio) / baseWidth;
+            const scaleY = (window.innerHeight * marginRatio) / baseHeight;
+            
+            const scale = Math.min(scaleX, scaleY);
+            
+            device.style.transform = `scale(${scale})`;
+        }
+
+        window.addEventListener('resize', fitToScreen);
+        window.addEventListener('DOMContentLoaded', fitToScreen);
+        fitToScreen();
+
+        const ACTIONS = [
+            { id: 'meal', name: '식사', icon: '🍚', effect: {hp:10, hap:2, str:3, int:-2}, hidden: {kind:4} },
+            { id: 'study', name: '공부', icon: '📚', effect: {int:10, hap:-5, str:-5, hp:-4}, hidden: {diligent:6, curious:4} },
+            { id: 'workout', name: '운동', icon: '⚽', effect: {hp:9, hap:2, int:-1, str:4}, hidden: {courage:6, diligent:6} },
+            { id: 'draw', name: '그림', icon: '🎨', effect: {hap:6, str:3, hp:-3, int:-1}, hidden: {creative:8, curious:2} },
+            { id: 'walk', name: '산책', icon: '🌿', effect: {hap:5, str:5, hp:-2, int:-1}, hidden: {courage:3, curious:5} },
+            { id: 'clean', name: '청소', icon: '🧹', effect: {str:4, hap:-1, hp:-5}, hidden: {diligent:7, kind:2} },
+            { id: 'cook', name: '요리', icon: '🍳', effect: {hp:5, hap:4, str:2}, hidden: {kind:6, creative:2} },
+            { id: 'nap', name: '낮잠', icon: '💤', effect: {hp:12, str:10}, hidden: {} },
+            { id: 'job', name: '알바', icon: '💰', effect: {hap:3, hp:-8, str:-8}, hidden: {greed:7, diligent:3} },
+            { id: 'internet', name: '인터넷', icon: '💻', effect: {int:5, hap:4, hp:-4, str:-3}, hidden: {curious:6, greed:3} }
+        ];
+
+        const EVENTS = [
+            { title: '🍪 간식이 눈앞에 있다.', choices: [ {text: '먹는다.', effect: {hp:5, hap:4, str:2}}, {text: '참는다.', effect: {int:2, str:-3}} ] },
+            { title: '📚 숙제가 쌓여 있다.', choices: [ {text: '지금 한다.', effect: {int:6, str:-5}}, {text: '나중에 한다.', effect: {hap:3, str:2}} ] },
+            { title: '🧹 방이 너무 어지럽다.', choices: [ {text: '청소한다.', effect: {hap:3, str:3}}, {text: '그냥 둔다.', effect: {hap:1, str:-2}} ] },
+            { title: '🎮 게임이 재미있어 보인다.', choices: [ {text: '한 시간만 한다.', effect: {hap:6, str:3}}, {text: '참는다.', effect: {int:2, str:-3}} ] },
+            { title: '📦 택배가 도착했다.', choices: [ {text: '바로 뜯어본다.', effect: {hap:5, str:2}}, {text: '나중에 연다.', effect: {int:2}} ] },
+            { title: '💤 졸음이 몰려온다.', choices: [ {text: '낮잠을 잔다.', effect: {hp:6, str:8}}, {text: '버틴다.', effect: {int:2, hp:-3, str:-5}} ] },
+            { title: '📺 재미있는 방송이 시작했다.', choices: [ {text: '끝까지 본다.', effect: {hap:4, hp:-1, str:2}}, {text: '끈다.', effect: {int:3, str:-2}} ] },
+            { title: '🎨 빈 종이가 있다.', choices: [ {text: '낙서를 한다.', effect: {hap:3, str:3}}, {text: '종이비행기를 만든다.', effect: {hp:1, hap:2}} ] },
+            { title: '🪴 화분이 시들어간다.', choices: [ {text: '물을 준다.', effect: {hap:3, str:2}}, {text: '창가로 옮긴다.', effect: {hp:1, hap:1}} ] },
+            { title: '📱 알림이 계속 온다.', choices: [ {text: '확인한다.', effect: {hap:2, str:1}}, {text: '무시한다.', effect: {int:2, str:-2}} ] },
+            { title: '🐈 길고양이를 만났다.', choices: [ {text: '쓰다듬는다.', effect: {hap:5, str:4}}, {text: '멀리서 본다.', effect: {int:1}} ] },
+            { title: '🌧 갑자기 비가 온다.', choices: [ {text: '뛰어서 집에 간다.', effect: {hp:-1, str:-2}}, {text: '비를 맞는다.', effect: {hap:4, hp:-2, str:-3}} ] },
+            { title: '📮 우편함에 편지가 있다.', choices: [ {text: '바로 읽는다.', effect: {hap:3, str:2}}, {text: '집에 가서 읽는다.', effect: {int:2}} ] },
+            { title: '🌼 예쁜 꽃을 발견했다.', choices: [ {text: '사진을 찍는다.', effect: {hap:2, str:2}}, {text: '향기를 맡는다.', effect: {hap:4, str:3}} ] },
+            { title: '🐦 새가 창가에 앉았다.', choices: [ {text: '구경한다.', effect: {hap:2, str:1}}, {text: '먹이를 준다.', effect: {hap:4, str:2}} ] },
+            { title: '🌬 바람이 분다.', choices: [ {text: '산책을 조금 더 한다.', effect: {hap:4, hp:-1, str:2}}, {text: '집으로 돌아간다.', effect: {hp:2, str:1}} ] },
+            { title: '🦋 나비가 날아간다.', choices: [ {text: '따라가 본다.', effect: {hp:-1, hap:3, str:2}}, {text: '바라보기만 한다.', effect: {hap:2, str:1}} ] }
+        ];
+
+        const ALL_ENDINGS = [
+            { id: 'art', name: '현대미술가', icon: '🎨', image: 'pic/job/art.png', reqAction: {draw: 3}, reqHidden: {creative: 45} },
+            { id: 'doc', name: '의사', icon: '🩺', image: 'pic/job/doc.png', reqAction: {study: 4}, reqHidden: {kind: 40, diligent: 45} },
+            { id: 'astro', name: '우주비행사', icon: '🚀', image: 'pic/job/astro.png', reqAction: {workout: 3, walk: 2}, reqHidden: {courage: 45, curious: 35} },
+            { id: 'ceo', name: '사업가', icon: '💼', image: 'pic/job/ceo.png', reqAction: {job: 3, internet: 2}, reqHidden: {greed: 45} },
+            { id: 'photo', name: '사진가', icon: '📷', image: 'pic/job/photo.png', reqAction: {walk: 3, draw: 2}, reqHidden: {creative: 40, curious: 40} },
+            { id: 'idol', name: '아이돌', icon: '🎤', image: 'pic/job/idol.png', reqAction: {workout: 3, internet: 3}, reqHidden: {greed: 35, diligent: 35, kind: 35} },
+            { id: 'dev', name: '개발자', icon: '💻', image: 'pic/job/dev.png', reqAction: {study: 3, internet: 4}, reqHidden: {curious: 45, diligent: 40} },
+            { id: 'barista', name: '바리스타', icon: '☕', image: 'pic/job/bar.png', reqAction: {cook: 3, clean: 2}, reqHidden: {kind: 45} },
+            { id: 'explorer', name: '탐험가', icon: '🧭', image: 'pic/job/exp.png', reqAction: {walk: 4, workout: 2}, reqHidden: {courage: 40, curious: 45} },
+            { id: 'normal', name: '평범한 사람', icon: '😊', image: 'pic/job/normal.png' }
+        ];
+        const NORMAL_JOB = ALL_ENDINGS.find(e => e.id === 'normal');
+
+        const QUOTES = {
+            baby: {
+                A: ["뭉...", "낑...", "꿍...", "킁..."],
+                B: ["좋은 것 같아.", "배가 고파.", "졸려...", "놀고 싶어.", "저건 뭐지?", "무서운 건 싫어.", "안아줬으면 좋겠어.", "기분이 좋아.", "심심해.", "조금 쉬고 싶어.", "맛있는 냄새가 나.", "신기해.", "따뜻해서 좋다.", "누군가 보고 싶어.", "새로운 게 좋아.", "조금 피곤해."]
+            },
+            child: ["공부는 어렵네.", "밖에 나가고 싶어.", "뭔가 알 것 같아.", "새로운 걸 배우고 싶어.", "오늘은 운이 좋을 것 같아.", "멋진 사람이 되고 싶어.", "산책하고 싶다.", "생각보다 어렵네.", "힘내자.", "도움이 되고 싶어.", "가끔은 아무것도 하기 싫어.", "더 강해지고 싶어.", "맛있는 걸 먹고 싶어.", "저건 어떻게 만드는 걸까?", "조금 긴장된다."],
+            adult: ["최선을 다해보자.", "쉬는 것도 중요한 것 같네.", "새로운 도전을 해보고 싶다.", "조금 피곤하지만 괜찮다.", "바람 쐬러 가고 싶다.", "바다 보러 가고 싶네.", "혼자만의 시간도 필요해.", "배가 고프네.", "오늘은 운이 따를 것 같은데.", "새로운 취미를 가져볼까?", "좀 쉴까.", "어떻게 할까.", "할만한데.", "흠."]
+        };
+
+        const MAX_TURN = 24;
+        let turn = 1, stats = { hp: 50, int: 50, hap: 50, str: 50 };
+        let hiddenStats = { kind: 0, courage: 0, creative: 0, diligent: 0, curious: 0, greed: 0 };
+        let actionCounts = {}, currentEvent = null, normalEndingCount = 0, trackedEnding = null, introStep = 0;
+        let showAllHintsState = false, photoModeState = false;
+        let endingTimer = null;
+        let endingPlaying = false;
+
+        let typingIntervals = [];
+        function stopAllTyping() {
+            typingIntervals.forEach(clearInterval);
+            typingIntervals = [];
+        }
+
+        function typeWriter(element, text, speed = 30, onComplete) {
+            stopAllTyping();
+            element.textContent = '';
+            if (!text) return;
+            let i = 0;
+            let interval = setInterval(() => {
+                element.textContent += text.charAt(i);
+                i++;
+                if (i >= text.length) {
+                    clearInterval(interval);
+                    if (onComplete) onComplete();
+                }
+            }, speed);
+            typingIntervals.push(interval);
+        }
+
+        function pulseIntroDog() {
+            const img = document.getElementById('intro-character-container');
+            if (img) {
+                img.style.transform = 'scale(1.12)';
+                setTimeout(() => { img.style.transform = 'scale(1)'; }, 180);
+            }
+        }
+
+        function toggleTrack(endingId) {
+            if (trackedEnding && trackedEnding.id === endingId) trackedEnding = null;
+            else trackedEnding = ALL_ENDINGS.find(e => e.id === endingId);
+            showCollection();
+        }
+
+        function toggleAllHints() {
+            showAllHintsState = !showAllHintsState;
+            document.getElementById('btn-toggle-all-hints').innerText = showAllHintsState ? "힌트 끄기" : "힌트 켜기";
+            showCollection();
+        }
+
+        function togglePhotoMode() {
+            photoModeState = !photoModeState;
+            const btn = document.getElementById('btn-photo-mode');
+            if (photoModeState) {
+                btn.textContent = "모드 해제";
+                btn.classList.add('bg-purple-200');
+            } else {
+                btn.textContent = "촬영 모드";
+                btn.classList.remove('bg-purple-200');
+            }
+            showCollection();
+        }
+
+        function clamp(val, min=0, max=100) { return Math.max(min, Math.min(max, val)); }
+        function shuffle(array) { return array.slice().sort(() => Math.random() - 0.5); }
+
+        function loadCollection() {
+            let data = localStorage.getItem('moondog_collection');
+            if (data) {
+                try {
+                    let parsed = JSON.parse(data);
+                    return !parsed.items ? { items: parsed, normalCount: 0 } : parsed;
+                } catch(e) { return { items: {}, normalCount: 0 }; }
+            }
+            return { items: {}, normalCount: 0 };
+        }
+
+        function saveToCollection(jobName) {
+            let col = loadCollection();
+            if (!col.items) col.items = {};
+            if (!col.items[jobName]) {
+                const date = new Date();
+                col.items[jobName] = `${String(date.getFullYear()).slice(2)}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
+            }
+            if (jobName === NORMAL_JOB.name) {
+                col.normalCount = (col.normalCount || 0) + 1;
+                normalEndingCount = col.normalCount;
+            }
+            localStorage.setItem('moondog_collection', JSON.stringify(col));
+        }
+
+        function onClickGameStart() {
+            let col = loadCollection();
+            normalEndingCount = col.normalCount || 0;
+            let totalCollectedCount = Object.keys(col.items || {}).length;
+            if (totalCollectedCount > 0 && confirm("이전에 플레이한 기록이 있습니다. 인트로를 건너뛰고 바로 시작할까요?")) {
+                startGameDirectly(); return;
+            }
+            document.getElementById('view-title').classList.add('hidden');
+            document.getElementById('view-intro').classList.remove('hidden');
+            introStep = 1; renderIntroStep();
+        }
+
+        function showIntroSpeech(text) {
+            const speechBox = document.getElementById('intro-speech-container');
+            const speechText = document.getElementById('intro-speech-text');
+            speechBox.classList.remove('opacity-0');
+            typeWriter(speechText, text, 40);
+            pulseIntroDog();
+        }
+
+        function hideIntroSpeech() { document.getElementById('intro-speech-container').classList.add('opacity-0'); }
+
+        function handleIntroClick(event) {
+            if (event.target.tagName === 'BUTTON' || event.target.closest('button')) return;
+            if (introStep < 4) { introStep++; renderIntroStep(); }
+        }
+
+        function renderIntroStep() {
+            const descBox = document.getElementById('intro-desc-text');
+            const actionArea = document.getElementById('intro-action-area');
+            actionArea.innerHTML = '';
+            actionArea.className = 'text-center text-pixel-sm text-slate-500 font-bold py-1.5 bg-slate-100 rounded-full';
+
+            if (introStep === 1) { 
+                showIntroSpeech("끼웅..."); 
+                descBox.textContent = ""; 
+                actionArea.textContent = "[ 화면을 클릭하여 계속 ]"; 
+            } 
+            else if (introStep === 2) { 
+                hideIntroSpeech(); 
+                typeWriter(descBox, "어디서 강아지 소리가 들린다.", 35); 
+                pulseIntroDog();
+                actionArea.textContent = "[ 화면을 클릭하여 계속 ]"; 
+            }
+            else if (introStep === 3) { 
+                showIntroSpeech("꾸웅..."); 
+                descBox.textContent = ""; 
+                actionArea.textContent = "[ 화면을 클릭하여 계속 ]"; 
+            }
+            else if (introStep === 4) {
+                hideIntroSpeech(); 
+                typeWriter(descBox, "...어떡하지?", 35); 
+                pulseIntroDog();
+                actionArea.className = 'grid grid-cols-2 gap-2 mt-1';
+                let btnTake = document.createElement('button');
+                btnTake.className = 'btn-round-bubble btn-pink py-2 text-pixel-md';
+                btnTake.textContent = "데려간다";
+                btnTake.onclick = () => { stopAllTyping(); document.getElementById('view-intro').classList.add('hidden'); startGameDirectly(); };
+                let btnLeave = document.createElement('button');
+                btnLeave.className = 'btn-round-bubble btn-yellow py-2 text-pixel-md text-slate-500';
+                btnLeave.textContent = "행운을 빈다";
+                btnLeave.onclick = () => {
+                    stopAllTyping();
+                    alert("미안, 강아지야...!");
+                    document.getElementById('view-intro').classList.add('hidden');
+                    document.getElementById('view-title').classList.remove('hidden');
+                };
+                actionArea.appendChild(btnTake); actionArea.appendChild(btnLeave);
+            }
+        }
+
+        function startGameDirectly() {
+            stopAllTyping();
+            let col = loadCollection(); normalEndingCount = col.normalCount || 0;
+            document.getElementById('view-title').classList.add('hidden');
+            document.getElementById('view-intro').classList.add('hidden');
+            document.getElementById('view-game').classList.remove('hidden');
+            document.getElementById('view-game').classList.add('flex');
+            turn = 1; stats = { hp: 50, int: 50, hap: 50, str: 50 };
+            hiddenStats = { kind: 0, courage: 0, creative: 0, diligent: 0, curious: 0, greed: 0 };
+            actionCounts = {}; hideSpeech(); renderTurn();
+        }
+
+        function startGame() { onClickGameStart(); }
+
+        function renderTurn() {
+            document.getElementById('txt-turn').textContent = `Turn ${turn}/${MAX_TURN}`;
+            document.getElementById('bar-progress').style.width = `${(turn / MAX_TURN) * 100}%`;
+            updateStatUI();
+
+            const charImg = document.getElementById('character-img');
+            let imgSrc = '';
+            if (turn <= 7) imgSrc = 'pic/dog/1.png';
+            else if (turn <= 18) imgSrc = 'pic/dog/2.png';
+            else imgSrc = 'pic/job/normal.png';
+
+            charImg.innerHTML = `<img src="${imgSrc}" class="mt-3 w-24 h-24 sm:w-28 sm:h-28 object-contain" draggable="false" alt="강아지">`;
+
+            const panel = document.getElementById('action-panel');
+            panel.innerHTML = '';
+            const btnColors = ['btn-blue', 'btn-pink', 'btn-green', 'btn-purple'];
+            let selectedActions = shuffle(ACTIONS).slice(0, 4);
+
+            selectedActions.forEach((act, index) => {
+                let btn = document.createElement('button');
+                btn.className = `btn-round-bubble ${btnColors[index]} py-1 flex flex-col items-center justify-center h-full relative shadow-none`; 
+                btn.style.boxShadow = `0 4px 0 0 var(--color-${btnColors[index]}-shadow)`;
+
+                if (trackedEnding && trackedEnding.reqAction && trackedEnding.reqAction[act.id]) {
+                    if ((actionCounts[act.id] || 0) < trackedEnding.reqAction[act.id]) {
+                        let starMark = document.createElement('span');
+                        starMark.className = 'absolute -top-1 -right-1 text-sm text-yellow-500 animate-bounce-slow';
+                        starMark.textContent = '★'; btn.appendChild(starMark);
+                    }
+                }
+                if (trackedEnding && trackedEnding.reqHidden && act.hidden) {
+                    let needsMoreHidden = false;
+                    for (let hKey in trackedEnding.reqHidden) {
+                        if ((hiddenStats[hKey] || 0) < trackedEnding.reqHidden[hKey] && act.hidden[hKey]) { needsMoreHidden = true; break; }
+                    }
+                    if (needsMoreHidden) {
+                        let lightMark = document.createElement('span');
+                        lightMark.className = btn.querySelector('.text-yellow-500') ? 'absolute -top-1 right-3 text-xs' : 'absolute -top-1 -right-1 text-xs';
+                        lightMark.textContent = '💡'; btn.appendChild(lightMark);
+                    }
+                }
+                let nameSpan = document.createElement('span');
+                nameSpan.className = 'text-pixel-md flex items-center gap-1 font-bold';
+                nameSpan.innerHTML = `<span class="text-base">${act.icon}</span> <span>${act.name}</span>`;
+                
+                let effectDiv = document.createElement('div');
+                effectDiv.className = 'flex flex-wrap justify-center gap-x-1 gap-y-0 opacity-80 font-sans';
+                const statMap = { hp: '체력', int: '지능', hap: '행복', str: '멘탈' };
+                const statOrder = ['hp', 'int', 'hap', 'str'];
+                
+                for (let key of statOrder) {
+                    if (act.effect[key] !== undefined) {
+                        let val = act.effect[key];
+                        let span = document.createElement('span');
+                        let sign = val > 0 ? '+' : '-';
+                        span.textContent = `${statMap[key]}${sign}`;
+                        span.className = 'text-[9px] font-light';
+                        effectDiv.appendChild(span);
+                    }
+                }
+
+                btn.appendChild(nameSpan); btn.appendChild(effectDiv);
+                btn.onclick = () => doAction(act);
+                panel.appendChild(btn);
+            });
+        }
+
+        function updateStatUI() {
+            stats.hp = clamp(stats.hp); stats.int = clamp(stats.int);
+            stats.hap = clamp(stats.hap); stats.str = clamp(stats.str);
+            document.getElementById('bar-hp').style.width = `${stats.hp}%`;
+            document.getElementById('bar-int').style.width = `${stats.int}%`;
+            document.getElementById('bar-hap').style.width = `${stats.hap}%`;
+            document.getElementById('bar-str').style.width = `${stats.str}%`;
+            
+            document.getElementById('bar-hp').style.backgroundColor = stats.hp <= 20 ? '#F88379' : '#4ADE80';
+            document.getElementById('bar-int').style.backgroundColor = stats.int <= 20 ? '#F88379' : '#60A5FA';
+            document.getElementById('bar-hap').style.backgroundColor = stats.hap <= 20 ? '#F88379' : '#FACC15';
+            document.getElementById('bar-str').style.backgroundColor = stats.str <= 20 ? '#F88379' : '#C084FC'; 
+        }
+
+        function showSpeech() {
+            const speechBox = document.getElementById('speech-container');
+            const speechText = document.getElementById('speech-text');
+            let text = "";
+            if (turn <= 7) text = `${QUOTES.baby.A[Math.floor(Math.random() * QUOTES.baby.A.length)]} oO(${QUOTES.baby.B[Math.floor(Math.random() * QUOTES.baby.B.length)]})`;
+            else if (turn <= 18) text = `oO(${QUOTES.child[Math.floor(Math.random() * QUOTES.child.length)]})`;
+            else text = `oO(${QUOTES.adult[Math.floor(Math.random() * QUOTES.adult.length)]})`;
+            speechText.textContent = text;
+            speechBox.classList.remove('opacity-0');
+            const img = document.getElementById('character-img');
+            img.style.transform = 'scale(1.1)';
+            setTimeout(() => { img.style.transform = 'scale(1)'; }, 150);
+        }
+
+        function hideSpeech() { document.getElementById('speech-container').classList.add('opacity-0'); }
+
+        function doAction(action) {
+            if (endingPlaying) return;
+            applyStats(action.effect); applyHiddenStats(action.hidden);
+            actionCounts[action.id] = (actionCounts[action.id] || 0) + 1;
+            updateStatUI(); showSpeech();
+            let failReason = checkGameOverCondition();
+            if (failReason) { showResult("게임 오버", failReason, "pic/dog/0.png"); return; }
+            if (Math.random() < 0.15) triggerRandomEvent(); else proceedNextTurn();
+        }
+
+        function applyStats(effect) {
+            if(!effect) return;
+            if(effect.hp) stats.hp += effect.hp; if(effect.int) stats.int += effect.int;
+            if(effect.hap) stats.hap += effect.hap; if(effect.str) stats.str += effect.str;
+        }
+
+        function applyHiddenStats(hidden) {
+            if(!hidden) return;
+            for(let key in hidden) hiddenStats[key] = clamp(hiddenStats[key] + hidden[key]);
+        }
+
+        function checkGameOverCondition() {
+            if (stats.hp <= 0) return "체력이 모두 소진되었습니다...";
+            if (stats.int <= 0) return "지능이 바닥에 떨어졌습니다...";
+            if (stats.hap <= 0) return "행복도가 0이 되어 우울해졌습니다...";
+            if (stats.str <= 0) return "멘탈이 무너져서 더 이상 진행할 수 없습니다...";
+            return null;
+        }
+
+        function triggerRandomEvent() {
+            currentEvent = EVENTS[Math.floor(Math.random() * EVENTS.length)];
+            document.getElementById('event-title').textContent = currentEvent.title;
+            const choicesContainer = document.getElementById('event-choices');
+            choicesContainer.innerHTML = '';
+            const choiceColors = ['btn-pink', 'btn-blue'];
+            currentEvent.choices.forEach((choice, index) => {
+                let btn = document.createElement('button');
+                btn.className = `btn-round-bubble ${choiceColors[index % 2]} py-2.5 text-pixel-md`;
+                btn.textContent = choice.text;
+                btn.onclick = () => handleEventChoice(index);
+                choicesContainer.appendChild(btn);
+            });
+            document.getElementById('modal-event').classList.remove('hidden');
+        }
+
+        function handleEventChoice(index) {
+            document.getElementById('modal-event').classList.add('hidden');
+            applyStats(currentEvent.choices[index].effect); updateStatUI();
+            let failReason = checkGameOverCondition();
+            if (failReason) { showResult("게임 오버", failReason, "pic/dog/0.png"); return; }
+            proceedNextTurn();
+        }
+
+        function proceedNextTurn() { turn++; if (turn > MAX_TURN) startEndingAnimation(); else renderTurn(); }
+
+        function startEndingAnimation() {
+            endingPlaying = true;
+
+            document.getElementById('txt-turn').textContent = `Turn 24/24`;
+            document.getElementById('bar-progress').style.width = `100%`;
+
+            const animView = document.getElementById('view-ending-anim');
+            animView.classList.remove('hidden');
+            
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    animView.classList.remove('opacity-0');
+                    animView.classList.add('opacity-100');
+                });
+            });
+
+            endingTimer = setTimeout(() => {
+                processEnding();
+            }, 2500);
+        }
+
+        function processEnding() {
+            let candidates = [];
+            ALL_ENDINGS.forEach(job => {
+                if (job.id === 'normal') return;
+                let passAction = true;
+                if (job.reqAction) for(let k in job.reqAction) if ((actionCounts[k] || 0) < job.reqAction[k]) passAction = false;
+                let passHidden = true;
+                if (job.reqHidden) for(let k in job.reqHidden) if (hiddenStats[k] < job.reqHidden[k]) passHidden = false;
+                if (passAction && passHidden) candidates.push(job);
+            });
+
+            if (candidates.length === 0) grantEnding(NORMAL_JOB);
+            else if (candidates.length === 1) grantEnding(candidates[0]);
+            else {
+                const container = document.getElementById('ending-options');
+                container.innerHTML = '';
+                const optionColors = ['btn-blue', 'btn-pink', 'btn-green', 'btn-purple'];
+                candidates.forEach((job, index) => {
+                    let btn = document.createElement('button');
+                    btn.className = `btn-round-bubble ${optionColors[index % 4]} py-3 text-pixel-md flex items-center justify-center gap-2`;
+                    btn.innerHTML = `<span class="text-xl">${job.icon}</span> <span>${job.name}</span>`;
+                    btn.onclick = () => { document.getElementById('modal-ending-select').classList.add('hidden'); grantEnding(job); };
+                    container.appendChild(btn);
+                });
+                document.getElementById('modal-ending-select').classList.remove('hidden');
+            }
+        }
+
+        function grantEnding(job) {
+            saveToCollection(job.name);
+            const animView = document.getElementById('view-ending-anim');
+            animView.classList.remove('opacity-100');
+            animView.classList.add('opacity-0');
+            setTimeout(() => {
+                animView.classList.add('hidden');
+                showResult(`엔딩: ${job.name}`, "훌륭하게 성장하여 멋진 강아지가 되었습니다!", job.image);
+            }, 500);
+        }
+
+        function showResult(title, desc, imageSrc = null) {
+            document.getElementById('view-game').classList.add('hidden');
+            document.getElementById('view-game').classList.remove('flex');
+
+            const resImg = document.getElementById('result-img');
+            if (imageSrc) {
+                resImg.src = imageSrc;
+                resImg.classList.remove('hidden');
+            } else {
+                resImg.classList.add('hidden');
+            }
+
+            document.getElementById('result-title').textContent = title;
+            document.getElementById('result-desc').textContent = desc;
+            document.getElementById('view-result').classList.remove('hidden');
+        }
+
+        function returnToTitle() {
+            endingPlaying = false;
+            document.getElementById('view-result').classList.add('hidden');
+            document.getElementById('view-title').classList.remove('hidden');
+        }
+
+        function showCollection() {
+            document.getElementById('view-title').classList.add('hidden');
+            const colView = document.getElementById('view-collection');
+            colView.classList.remove('hidden');
+
+            let colData = loadCollection();
+            const nCount = colData.normalCount || 0;
+            const btnToggleAllHints = document.getElementById('btn-toggle-all-hints');
+            
+            if (nCount >= 2) {
+                btnToggleAllHints.classList.remove('hidden');
+            } else {
+                btnToggleAllHints.classList.add('hidden');
+                showAllHintsState = false;
+            }
+            
+            btnToggleAllHints.textContent = showAllHintsState ? "힌트 끄기" : "힌트 켜기";
+
+            const list = document.getElementById('collection-list');
+            list.innerHTML = '';
+            const savedItems = colData.items || {};
+            let count = 0;
+
+            ALL_ENDINGS.forEach(ending => {
+                let item = document.createElement('div');
+                item.className = 'flex flex-col bg-white/70 border-2 border-slate-700 p-2.5 rounded-2xl shadow-sm relative';
+                
+                let isUnlocked = !!savedItems[ending.name];
+                if (isUnlocked) count++;
+
+                let topDiv = document.createElement('div');
+                topDiv.className = 'flex justify-between items-center mb-1';
+
+                let starBtnHtml = '';
+                if (nCount >= 2 && ending.id !== 'normal' && !photoModeState && !isUnlocked) {
+                    const isTracked = trackedEnding && trackedEnding.id === ending.id;
+                    const starColor = isTracked ? 'text-yellow-500' : 'text-slate-300 hover:text-yellow-400';
+                    starBtnHtml = `<button onclick="toggleTrack('${ending.id}')" class="text-lg transition-colors ml-1 ${starColor}">★</button>`;
+                }
+
+                if (isUnlocked) {
+                    topDiv.innerHTML = `<div class="flex items-center gap-1.5 w-full"><span class="text-lg">${ending.icon}</span><span class="text-slate-800 font-bold text-pixel-md flex-1 break-keep">${ending.name}</span>${starBtnHtml}</div>`;
+                } else {
+                    topDiv.innerHTML = `<div class="flex items-center gap-1.5 w-full"><span class="text-lg grayscale opacity-50">❓</span><span class="text-slate-400 font-bold text-pixel-md flex-1">???</span>${starBtnHtml}</div>`;
+                }
+                item.appendChild(topDiv);
+
+                let imageContainer = document.createElement('div');
+                imageContainer.className = 'w-full aspect-[3/4] bg-white border-2 border-slate-300 rounded-xl mx-auto flex flex-col items-center justify-center relative overflow-hidden my-1 shadow-inner';
+                
+                if (isUnlocked) {
+                    let displayImgSrc = ending.image;
+                    if (photoModeState && displayImgSrc) {
+                        displayImgSrc = displayImgSrc.replace('pic/job/', 'pic/job-2/');
+                    }
+                    if (displayImgSrc) {
+                        imageContainer.innerHTML = `<img src="${displayImgSrc}" class="w-full h-full object-contain" alt="${ending.name}" draggable="false">`;
+                    } else {
+                        imageContainer.innerHTML = `<div class="text-4xl">${ending.icon}</div>`;
+                    }
+                } else {
+                    imageContainer.innerHTML = `<div class="text-2xl text-slate-300">🔒</div><span class="text-pixel-sm text-slate-300 mt-1">미해금</span>`;
+                }
+                item.appendChild(imageContainer);
+
+                if (ending.id !== 'normal' && showAllHintsState) {
+                    let hintDiv = document.createElement('div');
+                    hintDiv.className = `pt-1.5 mt-1 border-t border-slate-200 text-pixel-sm text-slate-600 font-sans whitespace-normal break-keep leading-relaxed bg-slate-50 p-1.5 rounded-lg`;
+                    let reqText = [];
+                    if (ending.reqAction) {
+                        const actNames = { meal:'식사', study:'공부', workout:'운동', draw:'그림', walk:'산책', clean:'청소', cook:'요리', nap:'낮잠', job:'알바', internet:'인터넷' };
+                        for (let k in ending.reqAction) reqText.push(`[행동] ${actNames[k]} ${ending.reqAction[k]}회↑`);
+                    }
+                    if (ending.reqHidden) {
+                        const hideNames = { kind:'친절', courage:'용기', creative:'창의', diligent:'성실', curious:'호기심', greed:'욕심' };
+                        for (let k in ending.reqHidden) reqText.push(`[성향] ${hideNames[k]} ${ending.reqHidden[k]}↑`);
+                    }
+                    hintDiv.innerHTML = `<div class="font-bold text-slate-700 mb-0.5">💡 힌트</div><div class="flex flex-col gap-0.5">${reqText.map(t => `<div>${t}</div>`).join("")}</div>`;
+                    item.appendChild(hintDiv);
+                }
+                list.appendChild(item);
+            });
+
+            let header = document.createElement('div');
+            header.className = 'col-span-2 text-center text-slate-700 font-bold mb-1 bg-white/80 p-2 rounded-xl border-2 border-slate-700 text-pixel-md shadow-sm';
+            header.innerHTML = `달성률: <span class="text-blue-600">${count}</span> / ${ALL_ENDINGS.length}`;
+            list.insertBefore(header, list.firstChild);
+        }
+
+        function hideCollection() {
+            if (photoModeState) togglePhotoMode();
+            document.getElementById('view-collection').classList.add('hidden');
+            document.getElementById('view-title').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
