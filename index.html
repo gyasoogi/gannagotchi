@@ -278,6 +278,22 @@
         .dream-test-dialogue { width:100%; max-width:92%; background:rgba(255,255,255,.9); border:2px solid #64748b; border-radius:14px; padding:12px 14px; margin:5px 0; text-align:center; font-weight:700; }
         .dream-test-dialogue.result { min-height:180px; display:flex; flex-direction:column; justify-content:center; }
 
+        /* 캐릭터 이미지 터치 영역 스타일 추가 */
+        #character-img {
+            touch-action: none;
+            cursor: pointer;
+        }
+
+        .stat-bounce {
+            animation: statBounce 0.5s ease;
+            color: #EAB308 !important; /* 노란색 */
+        }
+
+        @keyframes statBounce {
+            0% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-5px) scale(1.1); }
+            100% { transform: translateY(0) scale(1); }
+        }
     </style>
 </head>
 <body>
@@ -497,8 +513,10 @@
         }
 
         window.addEventListener('resize', fitToScreen);
-        window.addEventListener('DOMContentLoaded', fitToScreen);
-        fitToScreen();
+        window.addEventListener('DOMContentLoaded', () => {
+            fitToScreen();
+            initPetting();
+        });
 
         const ACTIONS = [
             { id: 'meal', name: '식사', icon: '🍚', effect: {hp:10, hap:2, str:3, int:-2}, hidden: {kind:4} },
@@ -515,7 +533,7 @@
 
         const TAROT_CARDS = [
             { id: 'sun', name: '태양', icon: '☀️', desc: '밝고 따뜻한 기운이군...', hidden: {kind: 20, creative: 20}, resultText: '강아지의 친절과 창의가 올랐다!' },
-            { id: 'strength', name: '힘', icon: '💪', desc: '강인한 힘이 느껴지는군...', hidden: {courage: 20, diligent: 20}, resultText: '강아지의 용기와 인내가 올랐다!' },
+            { id: 'strength', name: '힘', icon: '💪', desc: '강인한 힘이 느껴지는군...', hidden: {courage: 20, diligent: 20}, resultText: '강아지의 용기와 성실이 올랐다!' },
             { id: 'magician', name: '마법사', icon: '🪄', desc: '신비로운 마법의 기운이군...', hidden: {curious: 20, greed: 20}, resultText: '강아지의 호기심과 욕심이 올랐다!' },
             { id: 'world', name: '세계', icon: '🌍', desc: '완전한 기운이군...', hidden: {kind: 10, courage: 10, creative: 10, diligent: 10, curious: 10, greed: 10}, resultText: '강아지의 모든 능력이 조금씩 올랐다!' }
         ];
@@ -546,12 +564,14 @@
         const MAX_TURN = 24;
         let turn = 1, stats = { hp: 50, int: 50, hap: 50, str: 50 };
         let hiddenStats = { kind: 0, courage: 0, creative: 0, diligent: 0, curious: 0, greed: 0 };
-        let actionCounts = {}, currentEvent = null, normalEndingCount = 0, trackedEnding = null, introStep = 0;
+        let actionCounts = {}, currentEvent = null, normalEndingCount = 0, introStep = 0;
         let showAllHintsState = false, photoModeState = false;
         let endingTimer = null;
         let endingPlaying = false;
-        
-        let tarotActive = false;
+        let tarotTriggeredThisGame = false;
+
+        let petRewardTurn = 0; // 쓰다듬기 보상 회차 추적용
+        let changedHiddenStats = {}; // 변화한 히든 스탯 추적용
 
         let dreamType = null;
         let dreamStep = 0;
@@ -582,6 +602,151 @@
             }
         };
 
+        /* ================= 쓰담쓰담 기능 구현 ================= */
+        let isPetting = false;
+        let petLastX = 0, petLastY = 0;
+        let petDir = 0; // 1: 증가 방향, -1: 감소 방향
+        let petStrokeCount = 0; // 방향 반전 횟수 (왕복 감지용)
+
+        function canPet() {
+            // 일반 게임 화면일 때만 가능 (이벤트, 꿈, 타로, 모달 및 엔딩 미진행 상태)
+            const gameView = document.getElementById('view-game');
+            if (!gameView || gameView.classList.contains('hidden')) return false;
+            if (endingPlaying || tarotActive || dreamStep > 0) return false;
+            
+            const modalEvent = document.getElementById('modal-event');
+            if (modalEvent && !modalEvent.classList.contains('hidden')) return false;
+            
+            const modalEnding = document.getElementById('modal-ending-select');
+            if (modalEnding && !modalEnding.classList.contains('hidden')) return false;
+            
+            return true;
+        }
+
+        function initPetting() {
+            const charArea = document.getElementById('character-img');
+            if (!charArea) return;
+
+            charArea.addEventListener('pointerdown', (e) => {
+                if (!canPet()) return;
+                isPetting = true;
+                petLastX = e.clientX;
+                petLastY = e.clientY;
+                petDir = 0;
+                petStrokeCount = 0;
+                try { charArea.setPointerCapture(e.pointerId); } catch(err){}
+            });
+
+            charArea.addEventListener('pointermove', (e) => {
+                if (!isPetting || !canPet()) return;
+
+                const dx = e.clientX - petLastX;
+                const dy = e.clientY - petLastY;
+
+                // 세로 드래그에 대한 역치 강화: 세로 움직임 주도 시 요구 거리를 크게(65px) 설정
+                const isVertical = Math.abs(dy) > Math.abs(dx) * 1.3;
+                const minThreshold = isVertical ? 65 : 30;
+
+                const mainDelta = isVertical ? dy : dx;
+                const currentDir = mainDelta > 0 ? 1 : (mainDelta < 0 ? -1 : 0);
+
+                if (Math.abs(mainDelta) >= minThreshold) {
+                    if (petDir !== 0 && currentDir !== petDir) {
+                        petStrokeCount++;
+                        triggerPetFeedbackSmall();
+                        // 3~4회 왕복 (방향 전환 6회) 필요
+                        if (petStrokeCount >= 6) { 
+                            onPetSuccess();
+                            resetPettingState();
+                            return;
+                        }
+                    }
+                    petDir = currentDir;
+                    petLastX = e.clientX;
+                    petLastY = e.clientY;
+                }
+            });
+
+            const endPet = (e) => {
+                if (isPetting) {
+                    resetPettingState();
+                    try { charArea.releasePointerCapture(e.pointerId); } catch(err){}
+                }
+            };
+
+            charArea.addEventListener('pointerup', endPet);
+            charArea.addEventListener('pointercancel', endPet);
+        }
+
+        function resetPettingState() {
+            isPetting = false;
+            petDir = 0;
+            petStrokeCount = 0;
+        }
+
+        function triggerPetFeedbackSmall() {
+            const charImg = document.getElementById('character-img');
+            if (charImg) {
+                charImg.style.transform = 'scale(1.05) rotate(3deg)';
+                setTimeout(() => {
+                    charImg.style.transform = 'scale(1) rotate(0deg)';
+                }, 100);
+            }
+        }
+
+        function onPetSuccess() {
+            // 회차(turn)당 한 번만 스탯이 오르도록 제한
+            if (petRewardTurn !== turn) {
+                changedHiddenStats = {};
+                applyStats({ hap: 10 });
+                applyHiddenStats({ kind: 5, courage: 5, creative: 5, diligent: 5, curious: 5, greed: 5 });
+                updateStatUI();
+                petRewardTurn = turn; // 보상을 받았으므로 현재 턴 기록
+            }
+
+            // 아래 이펙트는 제한 없이 항상 실행됨
+            const speechBox = document.getElementById('speech-container');
+            const speechText = document.getElementById('speech-text');
+            if (speechBox && speechText) {
+                speechText.textContent = "...!! (쓰담쓰담)";
+                speechBox.classList.remove('opacity-0');
+                setTimeout(() => {
+                    speechBox.classList.add('opacity-0');
+                }, 1500);
+            }
+
+            const charImg = document.getElementById('character-img');
+            if (charImg) {
+                charImg.style.transform = 'scale(1.18)';
+                setTimeout(() => { charImg.style.transform = 'scale(1)'; }, 200);
+                showFloatingHeart(charImg);
+            }
+        }
+
+        function showFloatingHeart(targetEl) {
+            const heart = document.createElement('div');
+            heart.textContent = '💖';
+            heart.style.position = 'absolute';
+            heart.style.fontSize = '24px';
+            heart.style.left = '50%';
+            heart.style.top = '10%';
+            heart.style.transform = 'translateX(-50%)';
+            heart.style.pointerEvents = 'none';
+            heart.style.transition = 'all 0.8s ease-out';
+            heart.style.zIndex = '100';
+            
+            targetEl.style.position = 'relative';
+            targetEl.appendChild(heart);
+
+            requestAnimationFrame(() => {
+                heart.style.top = '-25px';
+                heart.style.opacity = '0';
+            });
+
+            setTimeout(() => { heart.remove(); }, 800);
+        }
+        /* ==================================================== */
+
         let typingIntervals = [];
         function stopAllTyping() {
             typingIntervals.forEach(clearInterval);
@@ -610,12 +775,6 @@
                 img.style.transform = 'scale(1.12)';
                 setTimeout(() => { img.style.transform = 'scale(1)'; }, 180);
             }
-        }
-
-        function toggleTrack(endingId) {
-            if (trackedEnding && trackedEnding.id === endingId) trackedEnding = null;
-            else trackedEnding = ALL_ENDINGS.find(e => e.id === endingId);
-            showCollection();
         }
 
         function toggleAllHints() {
@@ -749,6 +908,9 @@
             hiddenStats = { kind: 0, courage: 0, creative: 0, diligent: 0, curious: 0, greed: 0 };
             actionCounts = {};
             tarotActive = false;
+            tarotTriggeredThisGame = false;
+            petRewardTurn = 0; // 게임 시작 시 초기화
+            changedHiddenStats = {}; // 게임 시작 시 초기화
             
             dreamType = null; dreamStep = 0; dreamAccepted = false; dreamTriggered = false;
             dreamCountdown = 0; dreamTestResult = null; dreamFailJobId = null; pendingDreamTrigger = false;
@@ -787,24 +949,6 @@
                 btn.className = `btn-round-bubble ${btnColors[index]} py-1 flex flex-col items-center justify-center h-full relative shadow-none`; 
                 btn.style.boxShadow = `0 4px 0 0 var(--color-${btnColors[index]}-shadow)`;
 
-                if (trackedEnding && trackedEnding.reqAction && trackedEnding.reqAction[act.id]) {
-                    if ((actionCounts[act.id] || 0) < trackedEnding.reqAction[act.id]) {
-                        let starMark = document.createElement('span');
-                        starMark.className = 'absolute -top-1 -right-1 text-sm text-yellow-500 animate-bounce-slow';
-                        starMark.textContent = '★'; btn.appendChild(starMark);
-                    }
-                }
-                if (trackedEnding && trackedEnding.reqHidden && act.hidden) {
-                    let needsMoreHidden = false;
-                    for (let hKey in trackedEnding.reqHidden) {
-                        if ((hiddenStats[hKey] || 0) < trackedEnding.reqHidden[hKey] && act.hidden[hKey]) { needsMoreHidden = true; break; }
-                    }
-                    if (needsMoreHidden) {
-                        let lightMark = document.createElement('span');
-                        lightMark.className = btn.querySelector('.text-yellow-500') ? 'absolute -top-1 right-3 text-xs' : 'absolute -top-1 -right-1 text-xs';
-                        lightMark.textContent = '💡'; btn.appendChild(lightMark);
-                    }
-                }
                 let nameSpan = document.createElement('span');
                 nameSpan.className = 'text-pixel-md flex items-center gap-1 font-bold';
                 nameSpan.innerHTML = `<span class="text-base">${act.icon}</span> <span>${act.name}</span>`;
@@ -873,12 +1017,17 @@
 
             const hsBox = document.getElementById('hidden-stats-bg');
             if (hsBox) {
-                hsBox.innerHTML = `<span id="hs-kind" class="transition-colors duration-150">친절:${hiddenStats.kind}</span>` +
-                                  `<span id="hs-courage" class="transition-colors duration-150">용기:${hiddenStats.courage}</span>` +
-                                  `<span id="hs-creative" class="transition-colors duration-150">창의:${hiddenStats.creative}</span>` +
-                                  `<span id="hs-diligent" class="transition-colors duration-150">성실:${hiddenStats.diligent}</span>` +
-                                  `<span id="hs-curious" class="transition-colors duration-150">호기심:${hiddenStats.curious}</span>` +
-                                  `<span id="hs-greed" class="transition-colors duration-150">욕심:${hiddenStats.greed}</span>`;
+                const hsNames = ['kind', 'courage', 'creative', 'diligent', 'curious', 'greed'];
+                const hsLabels = ['친절', '용기', '창의', '성실', '호기심', '욕심'];
+                
+                let html = '';
+                for (let i = 0; i < hsNames.length; i++) {
+                    let key = hsNames[i];
+                    // 상승한 스탯일 경우 stat-bounce 클래스 부여 (통통 튀기기 위해 inline-block도 필요)
+                    let extraClass = changedHiddenStats[key] ? 'stat-bounce inline-block' : '';
+                    html += `<span id="hs-${key}" class="transition-colors duration-150 ${extraClass}">${hsLabels[i]}:${hiddenStats[key]}</span>`;
+                }
+                hsBox.innerHTML = html;
             }
         }
 
@@ -900,6 +1049,9 @@
 
         function doAction(action) {
             if (endingPlaying || dreamStep > 0 || tarotActive || document.getElementById('modal-event').classList.contains('hidden') === false) return;
+            
+            changedHiddenStats = {};
+            
             applyStats(action.effect); applyHiddenStats(action.hidden);
             actionCounts[action.id] = (actionCounts[action.id] || 0) + 1;
             updateStatUI(); showSpeech();
@@ -912,7 +1064,8 @@
                 return;
             }
             
-            if (turn >= 3 && Math.random() < 0.7) { 
+            if (!tarotTriggeredThisGame && turn >= 3 && Math.random() < 0.15) { 
+                tarotTriggeredThisGame = true; // 발생했음을 기록
                 triggerTarotProposal();
                 return;
             }
@@ -987,6 +1140,7 @@
             clickedBtn.className = `btn-round-bubble btn-yellow min-h-[12px] py-1 rounded-[6px] flex flex-col items-center justify-center h-full relative fade-in`;
             clickedBtn.innerHTML = `<span class="text-xl sm:text-2xl">${card.icon}</span>`; 
             
+            changedHiddenStats = {};
             applyHiddenStats(card.hidden);
             updateStatUI();
             
@@ -1006,7 +1160,7 @@
                 returnBtn.textContent = '집으로 복귀';
                 returnBtn.onclick = endTarotEvent;
                 panel.appendChild(returnBtn);
-            }, 2500); 
+            }, 3000); 
         }
 
         function endTarotEvent() {
@@ -1411,7 +1565,13 @@
 
         function applyHiddenStats(hidden) {
             if(!hidden) return;
-            for(let key in hidden) hiddenStats[key] = clamp(hiddenStats[key] + hidden[key]);
+            for(let key in hidden) {
+                let oldVal = hiddenStats[key];
+                hiddenStats[key] = clamp(hiddenStats[key] + hidden[key]);
+                if (hiddenStats[key] > oldVal) {
+                    changedHiddenStats[key] = true;
+                }
+            }
         }
 
         function checkGameOverCondition() {
@@ -1565,17 +1725,10 @@
                 let topDiv = document.createElement('div');
                 topDiv.className = 'flex justify-between items-center mb-1';
 
-                let starBtnHtml = '';
-                if (nCount >= 2 && ending.id !== 'normal' && !photoModeState && !isUnlocked) {
-                    const isTracked = trackedEnding && trackedEnding.id === ending.id;
-                    const starColor = isTracked ? 'text-yellow-500' : 'text-slate-300 hover:text-yellow-400';
-                    starBtnHtml = `<button onclick="toggleTrack('${ending.id}')" class="text-lg transition-colors ml-1 ${starColor}">★</button>`;
-                }
-
                 if (isUnlocked) {
-                    topDiv.innerHTML = `<div class="flex items-center gap-1.5 w-full"><span class="text-lg">${ending.icon}</span><span class="text-slate-800 font-bold text-pixel-md flex-1 break-keep">${ending.name}</span>${starBtnHtml}</div>`;
+                    topDiv.innerHTML = `<div class="flex items-center gap-1.5 w-full"><span class="text-lg">${ending.icon}</span><span class="text-slate-800 font-bold text-pixel-md flex-1 break-keep">${ending.name}</span></div>`;
                 } else {
-                    topDiv.innerHTML = `<div class="flex items-center gap-1.5 w-full"><span class="text-lg grayscale opacity-50">❓</span><span class="text-slate-400 font-bold text-pixel-md flex-1">???</span>${starBtnHtml}</div>`;
+                    topDiv.innerHTML = `<div class="flex items-center gap-1.5 w-full"><span class="text-lg grayscale opacity-50">❓</span><span class="text-slate-400 font-bold text-pixel-md flex-1">???</span></div>`;
                 }
                 item.appendChild(topDiv);
 
